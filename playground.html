@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playground — Novac</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <a class="brand" href="/">nova<span class="dot">c</span></a>
+    <div class="site-nav-links">
+      <a href="/docs/">Docs</a>
+      <a href="/download.html">Download</a>
+      <a href="/playground.html" class="active">Playground</a>
+      <a class="gh-link" href="https://github.com/purcwix/novac" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div style="padding: 56px 0 8px;">
+    <div class="eyebrow">Playground</div>
+    <h1 style="font-family: var(--mono); font-size: 2rem; margin: 0 0 10px; letter-spacing:-0.01em;">Explore Novac</h1>
+  </div>
+
+  <div class="pg-note">
+    Live in-browser execution isn't wired up yet — Novac's VM currently depends on native FFI and COM
+    interop that don't cross-compile to WebAssembly as-is. Until a WASM build exists, this page shows
+    real, runnable examples with their actual output. Run them yourself with <code class="inline">novac example.nv</code>.
+  </div>
+
+  <div class="pg-examples-nav" id="pg-tabs"></div>
+  <div id="pg-examples"></div>
+</div>
+
+<footer class="site-footer">
+  <div class="page" style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:12px;">
+    <span>Novac is built and maintained by <a href="https://github.com/purcwix" target="_blank" rel="noopener">purcwix</a>.</span>
+    <span><a href="https://github.com/purcwix/novac" target="_blank" rel="noopener">Source on GitHub</a></span>
+  </div>
+</footer>
+
+<script>
+const examples = [
+  {
+    id: "hello",
+    label: "Hello, world",
+    title: "Hello, world",
+    desc: "The basics: variables, string concatenation, print.",
+    code: `let name = "world"
+print("hello, " + name)`,
+    output: `hello, world`
+  },
+  {
+    id: "sort",
+    label: "Arrays",
+    title: "Sorting and chaining",
+    desc: "Method chaining on built-in array operations.",
+    code: `let nums = [3, 1, 4, 1, 5, 9]
+print(nums.sort().reverse())`,
+    output: `[9, 5, 4, 3, 1, 1]`
+  },
+  {
+    id: "fn",
+    label: "Functions",
+    title: "Functions & recursion",
+    desc: "Plain function declarations, recursive calls.",
+    code: `fn fib(n) {
+    if (n < 2) { return n }
+    return fib(n - 1) + fib(n - 2)
+}
+
+print(fib(10))`,
+    output: `55`
+  },
+  {
+    id: "ffi",
+    label: "Native FFI",
+    title: "Calling into a C library",
+    desc: "Bind a native function through libffi and call it directly.",
+    code: `let libm = Std.Ffi.load("libm.so.6")
+let sqrt = libm.bind("sqrt", "double", ["double"])
+print(sqrt(2))`,
+    output: `1.4142135623730951`
+  },
+  {
+    id: "lexer",
+    label: "Std.Lexer",
+    title: "Tokenizing with the stdlib lexer",
+    desc: "Novac's own lexer, exposed as a library you can reuse.",
+    code: `let lx = Std.Lexer.new("let x = 1 + 2")
+for (let tok = lx.next(); tok != null; tok = lx.next()) {
+    print(tok.type + ": " + tok.value)
+}`,
+    output: `KEYWORD: let
+IDENT: x
+OP: =
+NUMBER: 1
+OP: +
+NUMBER: 2`
+  }
+];
+
+const tabsEl = document.getElementById("pg-tabs");
+const exEl = document.getElementById("pg-examples");
+
+tabsEl.innerHTML = examples.map((e, i) =>
+  `<button class="pg-tab${i === 0 ? " active" : ""}" data-id="${e.id}">${e.label}</button>`
+).join("");
+
+exEl.innerHTML = examples.map((e, i) => `
+  <div class="pg-example${i === 0 ? " active" : ""}" id="ex-${e.id}">
+    <h3>${e.title}</h3>
+    <p>${e.desc}</p>
+    <pre>${e.code}</pre>
+    <div class="eyebrow" style="margin-top:18px;">Output</div>
+    <pre>${e.output}</pre>
+  </div>
+`).join("");
+
+tabsEl.addEventListener("click", (ev) => {
+  const btn = ev.target.closest(".pg-tab");
+  if (!btn) return;
+  const id = btn.dataset.id;
+  document.querySelectorAll(".pg-tab").forEach(t => t.classList.toggle("active", t === btn));
+  document.querySelectorAll(".pg-example").forEach(el => el.classList.toggle("active", el.id === `ex-${id}`));
+});
+</script>
+
+</body>
+</html>

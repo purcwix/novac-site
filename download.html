@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Download — Novac</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <a class="brand" href="/">nova<span class="dot">c</span></a>
+    <div class="site-nav-links">
+      <a href="/docs/">Docs</a>
+      <a href="/download.html" class="active">Download</a>
+      <a href="/playground.html">Playground</a>
+      <a class="gh-link" href="https://github.com/purcwix/novac" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div style="padding: 56px 0 8px;">
+    <div class="eyebrow">Download</div>
+    <h1 style="font-family: var(--mono); font-size: 2rem; margin: 0 0 10px; letter-spacing:-0.01em;">Get Novac</h1>
+    <p style="color: var(--text-muted); max-width: 60ch; margin: 0 0 32px;">
+      Prebuilt binaries are generated on every release for Linux (x64 &amp; ARM64) and macOS (Intel &amp; Apple Silicon).
+      Windows users and anyone who wants the latest changes can build from source.
+    </p>
+  </div>
+
+  <div id="release-meta" style="margin-bottom: 18px; font-size: 0.88rem; color: var(--text-muted);">Loading latest release…</div>
+
+  <table class="dl-table" id="dl-table">
+    <thead>
+      <tr>
+        <th>Platform</th>
+        <th>Asset</th>
+        <th>Size</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="dl-rows">
+      <tr><td colspan="4" class="dl-status">Fetching release assets from GitHub…</td></tr>
+    </tbody>
+  </table>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="section-label">Build from source</div>
+      <h2 class="section-title">Every platform, always up to date</h2>
+    </div>
+    <pre>git clone https://github.com/purcwix/novac.git
+cd novac
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release -j4</pre>
+    <p style="color: var(--text-muted); font-size: 0.9rem;">
+      Requires CMake 3.20+ and a C++20 compiler. See the
+      <a href="/docs/#building">build documentation</a> for platform-specific notes.
+    </p>
+  </section>
+</div>
+
+<footer class="site-footer">
+  <div class="page" style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:12px;">
+    <span>Novac is built and maintained by <a href="https://github.com/purcwix" target="_blank" rel="noopener">purcwix</a>.</span>
+    <span><a href="https://github.com/purcwix/novac" target="_blank" rel="noopener">Source on GitHub</a></span>
+  </div>
+</footer>
+
+<script>
+const REPO = "purcwix/novac";
+
+function fmtBytes(n) {
+  if (!n && n !== 0) return "";
+  const units = ["B", "KB", "MB", "GB"];
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return n.toFixed(n < 10 && i > 0 ? 1 : 0) + " " + units[i];
+}
+
+function platformLabel(name) {
+  const n = name.toLowerCase();
+  if (n.includes("win")) return "Windows";
+  if (n.includes("macos") || n.includes("darwin") || n.includes("osx")) {
+    if (n.includes("arm64") || n.includes("aarch64")) return "macOS (Apple Silicon)";
+    return "macOS (Intel)";
+  }
+  if (n.includes("linux")) {
+    if (n.includes("arm64") || n.includes("aarch64")) return "Linux (ARM64)";
+    return "Linux (x64)";
+  }
+  return "Other";
+}
+
+async function loadRelease() {
+  const metaEl = document.getElementById("release-meta");
+  const rowsEl = document.getElementById("dl-rows");
+  try {
+    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+    if (!res.ok) throw new Error(`GitHub API responded ${res.status}`);
+    const release = await res.json();
+
+    metaEl.textContent = `Latest release: ${release.tag_name}` +
+      (release.published_at ? ` — published ${new Date(release.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}` : "");
+
+    if (!release.assets || release.assets.length === 0) {
+      rowsEl.innerHTML = `<tr><td colspan="4" class="dl-status">No binary assets attached to the latest release yet. Build from source below, or check the <a href="https://github.com/${REPO}/releases" target="_blank" rel="noopener">releases page</a>.</td></tr>`;
+      return;
+    }
+
+    rowsEl.innerHTML = release.assets.map(a => `
+      <tr>
+        <td class="platform-cell">${platformLabel(a.name)}</td>
+        <td><code class="inline">${a.name}</code></td>
+        <td>${fmtBytes(a.size)}</td>
+        <td><a class="btn btn-secondary" href="${a.browser_download_url}">Download</a></td>
+      </tr>
+    `).join("");
+  } catch (err) {
+    metaEl.textContent = "";
+    rowsEl.innerHTML = `<tr><td colspan="4" class="dl-error">Couldn't load release info (${err.message}). You can browse releases directly on <a href="https://github.com/${REPO}/releases" target="_blank" rel="noopener">GitHub</a>.</td></tr>`;
+  }
+}
+
+loadRelease();
+</script>
+
+</body>
+</html>

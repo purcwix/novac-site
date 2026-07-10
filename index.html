@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Novac — a language and VM built from scratch</title>
+<meta name="description" content="Novac is a scripting language with its own C++ VM, lexer, parser, and native FFI bridge.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <a class="brand" href="/">nova<span class="dot">c</span></a>
+    <div class="site-nav-links">
+      <a href="/docs/" >Docs</a>
+      <a href="/download.html">Download</a>
+      <a href="/playground.html">Playground</a>
+      <a class="gh-link" href="https://github.com/purcwix/novac" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow">Systems scripting language</div>
+      <h1 class="hero-title">A language and VM,<br>built from the ground up.</h1>
+      <p class="hero-sub">Novac is a scripting language with its own lexer, parser, and bytecode VM — plus a native FFI bridge for calling into C libraries and Windows COM directly from script.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="/download.html">Download Novac</a>
+        <a class="btn btn-secondary" href="/docs/">Read the docs</a>
+      </div>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-title">novac — repl</span>
+      </div>
+      <div class="terminal-body"><span class="t-prompt">$</span> <span class="t-in">novac</span>
+<span class="t-comment">novac 0.x — type .help for REPL commands</span>
+<span class="t-prompt">&gt;</span> <span class="t-in">let nums = [3, 1, 4, 1, 5, 9]</span>
+<span class="t-prompt">&gt;</span> <span class="t-in">nums.sort().reverse()</span>
+<span class="t-out">[9, 5, 4, 3, 1, 1]</span>
+<span class="t-prompt">&gt;</span> <span class="t-in">Std.Ffi.call("user32", "MessageBoxW", ...)</span>
+<span class="t-out">0</span>
+<span class="t-prompt">&gt;</span> <span class="t-cursor"></span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="section-label">Why Novac</div>
+      <h2 class="section-title">Owned end to end</h2>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <h3>Custom C++ VM</h3>
+        <p>A bytecode virtual machine written from scratch, with a value-type core built for primitive performance rather than pointer-chasing.</p>
+      </div>
+      <div class="card">
+        <h3>Native FFI</h3>
+        <p>Call directly into C libraries via libffi — including native callbacks, variadic calls, and struct/union marshalling by value.</p>
+      </div>
+      <div class="card">
+        <h3>Windows COM interop</h3>
+        <p>Script against COM objects directly, including WebView2, without hand-writing bindings for every interface.</p>
+      </div>
+      <div class="card">
+        <h3>A real REPL</h3>
+        <p>Raw-mode line editing, arrow-key history, and built-in <code class="inline">.edit</code> / <code class="inline">.time</code> / <code class="inline">.save</code> commands.</p>
+      </div>
+      <div class="card">
+        <h3>Batteries included</h3>
+        <p>A growing standard library — string scanning, lexing, string building, and an <code class="inline">Std.LLM</code> wrapper around llama.cpp.</p>
+      </div>
+      <div class="card">
+        <h3>nv+ package manager</h3>
+        <p>Publish and install Novac packages through a GitHub PR–based registry workflow, no central server required.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="section-label">Get started</div>
+      <h2 class="section-title">Three ways in</h2>
+    </div>
+    <pre><span class="t-comment"># 1. Download a prebuilt binary for your platform</span>
+<span class="t-comment"># → see /download.html</span>
+
+<span class="t-comment"># 2. Or build from source</span>
+git clone https://github.com/purcwix/novac.git
+cd novac &amp;&amp; cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release -j4
+
+<span class="t-comment"># 3. Run the REPL</span>
+./novac</pre>
+  </section>
+
+</div>
+
+<footer class="site-footer">
+  <div class="page" style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:12px;">
+    <span>Novac is built and maintained by <a href="https://github.com/purcwix" target="_blank" rel="noopener">purcwix</a>.</span>
+    <span><a href="https://github.com/purcwix/novac" target="_blank" rel="noopener">Source on GitHub</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

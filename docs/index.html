@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docs — Novac</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <a class="brand" href="/">nova<span class="dot">c</span></a>
+    <div class="site-nav-links">
+      <a href="/docs/" class="active">Docs</a>
+      <a href="/download.html">Download</a>
+      <a href="/playground.html">Playground</a>
+      <a class="gh-link" href="https://github.com/purcwix/novac" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page docs-layout">
+  <aside class="docs-nav">
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Get started</div>
+      <a href="#introduction" class="active">Introduction</a>
+      <a href="#building">Building from source</a>
+      <a href="#repl">Using the REPL</a>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Language</div>
+      <a href="#syntax">Basic syntax</a>
+      <a href="#stdlib">Standard library</a>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Native interop</div>
+      <a href="#ffi">FFI &amp; libffi</a>
+      <a href="#com">Windows COM</a>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Tooling</div>
+      <a href="#nvplus">nv+ package manager</a>
+    </div>
+  </aside>
+
+  <main class="docs-content prose">
+    <h1 id="introduction">Introduction</h1>
+    <p>
+      Novac is a scripting language built from scratch: its own lexer, parser, and bytecode virtual machine,
+      written in C++. It's designed for scripts that need to reach outside the sandbox — calling into native
+      C libraries through libffi, or driving Windows COM objects — without giving up a REPL-first, scripting
+      language feel.
+    </p>
+    <p>
+      This section is a living document. It grows alongside the language itself, so expect gaps — if you hit
+      one, the source and stdlib are the ground truth in the meantime.
+    </p>
+
+    <h2 id="building">Building from source</h2>
+    <p>Novac requires CMake 3.20+ and a C++20 compiler (GCC 13+, Clang 16+, or MSVC 2022+).</p>
+    <pre>git clone https://github.com/purcwix/novac.git
+cd novac
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release -j4</pre>
+    <p>This produces two binaries: <code class="inline">novac</code>, the interpreter/VM, and <code class="inline">nv+</code>, the package manager.</p>
+
+    <h2 id="repl">Using the REPL</h2>
+    <p>Running <code class="inline">novac</code> with no arguments drops you into the REPL, with raw-mode line
+      editing and arrow-key history navigation built in.</p>
+    <pre>$ novac
+&gt; let x = 21
+&gt; x * 2
+42</pre>
+    <p>Built-in REPL commands:</p>
+    <ul>
+      <li><code class="inline">.edit</code> — open the current buffer in your <code class="inline">$EDITOR</code></li>
+      <li><code class="inline">.time</code> — time the execution of the next expression</li>
+      <li><code class="inline">.history</code> — show REPL input history</li>
+      <li><code class="inline">.save &lt;file&gt;</code> — save the current session to a file</li>
+    </ul>
+
+    <h2 id="syntax">Basic syntax</h2>
+    <pre>let name = "world"
+print("hello, " + name)
+
+fn add(a, b) {
+    return a + b
+}
+
+let nums = [3, 1, 4, 1, 5, 9]
+print(nums.sort().reverse())</pre>
+
+    <h2 id="stdlib">Standard library</h2>
+    <p>A growing set of built-in modules, including:</p>
+    <ul>
+      <li><code class="inline">Std.StringScanner</code> / <code class="inline">Std.StringBuilder</code> — text processing</li>
+      <li><code class="inline">Std.Lexer</code> — build your own tokenizers on top of Novac's own</li>
+      <li><code class="inline">Std.LLM</code> — a llama.cpp wrapper with KV-cache diffing</li>
+      <li><code class="inline">Std.Getch</code> / <code class="inline">Std.Kbhit</code> / <code class="inline">Std.Putch</code> — cross-platform terminal I/O</li>
+    </ul>
+
+    <h2 id="ffi">FFI &amp; libffi</h2>
+    <p>Novac can call into C libraries directly, including native callbacks via <code class="inline">ffi_closure</code>,
+      variadic calls, and struct/union marshalling by value.</p>
+    <pre>let libm = Std.Ffi.load("libm.so.6")
+let sqrt = libm.bind("sqrt", "double", ["double"])
+print(sqrt(2))</pre>
+
+    <h2 id="com">Windows COM</h2>
+    <p>On Windows, Novac scripts can drive COM objects directly — including embedding WebView2 — without
+      hand-writing interface bindings.</p>
+
+    <h2 id="nvplus">nv+ package manager</h2>
+    <p>
+      <code class="inline">nv+</code> installs and publishes Novac packages through a GitHub PR–based registry
+      workflow (<a href="https://github.com/purcwix/nova-registry" target="_blank" rel="noopener">nova-registry</a>) —
+      no central package server required.
+    </p>
+    <pre>nv+ install nvo-semver
+nv+ install nvo-cron</pre>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <div class="page" style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:12px;">
+    <span>Novac is built and maintained by <a href="https://github.com/purcwix" target="_blank" rel="noopener">purcwix</a>.</span>
+    <span><a href="https://github.com/purcwix/novac" target="_blank" rel="noopener">Source on GitHub</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
