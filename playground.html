@@ -52,8 +52,8 @@ const examples = [
     label: "Hello, world",
     title: "Hello, world",
     desc: "The basics: variables, string concatenation, print.",
-    code: `let name = "world"
-print("hello, " + name)`,
+    code: `let name = "world";
+Std.println("hello, " + name);`,
     output: `hello, world`
   },
   {
@@ -61,49 +61,23 @@ print("hello, " + name)`,
     label: "Arrays",
     title: "Sorting and chaining",
     desc: "Method chaining on built-in array operations.",
-    code: `let nums = [3, 1, 4, 1, 5, 9]
-print(nums.sort().reverse())`,
+    code: `let nums = [3, 1, 4, 1, 5, 9];
+Std.println(nums.sort().reverse());`,
     output: `[9, 5, 4, 3, 1, 1]`
   },
   {
-    id: "fn",
+    id: "functions",
     label: "Functions",
     title: "Functions & recursion",
     desc: "Plain function declarations, recursive calls.",
-    code: `fn fib(n) {
-    if (n < 2) { return n }
-    return fib(n - 1) + fib(n - 2)
+    code: `function fib(n) {
+    if n < 2 { return n }
+    return fib(n - 1) + fib(n - 2);
 }
 
-print(fib(10))`,
+Std.println(fib(10));`,
     output: `55`
   },
-  {
-    id: "ffi",
-    label: "Native FFI",
-    title: "Calling into a C library",
-    desc: "Bind a native function through libffi and call it directly.",
-    code: `let libm = Std.Ffi.load("libm.so.6")
-let sqrt = libm.bind("sqrt", "double", ["double"])
-print(sqrt(2))`,
-    output: `1.4142135623730951`
-  },
-  {
-    id: "lexer",
-    label: "Std.Lexer",
-    title: "Tokenizing with the stdlib lexer",
-    desc: "Novac's own lexer, exposed as a library you can reuse.",
-    code: `let lx = Std.Lexer.new("let x = 1 + 2")
-for (let tok = lx.next(); tok != null; tok = lx.next()) {
-    print(tok.type + ": " + tok.value)
-}`,
-    output: `KEYWORD: let
-IDENT: x
-OP: =
-NUMBER: 1
-OP: +
-NUMBER: 2`
-  }
 ];
 
 const tabsEl = document.getElementById("pg-tabs");

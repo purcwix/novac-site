@@ -36,11 +36,6 @@
       <a href="#stdlib">Standard library</a>
     </div>
     <div class="docs-nav-group">
-      <div class="docs-nav-group-title">Native interop</div>
-      <a href="#ffi">FFI &amp; libffi</a>
-      <a href="#com">Windows COM</a>
-    </div>
-    <div class="docs-nav-group">
       <div class="docs-nav-group-title">Tooling</div>
       <a href="#nvplus">nv+ package manager</a>
     </div>
@@ -49,10 +44,8 @@
   <main class="docs-content prose">
     <h1 id="introduction">Introduction</h1>
     <p>
-      Novac is a scripting language built from scratch: its own lexer, parser, and bytecode virtual machine,
-      written in C++. It's designed for scripts that need to reach outside the sandbox — calling into native
-      C libraries through libffi, or driving Windows COM objects — without giving up a REPL-first, scripting
-      language feel.
+      Novac is a scripting language built from scratch: its own lexer, parser, and executor,
+      written in C++. It's designed for scripts and toolings, it provides clean syntax, high level scripting features alongside low level power
     </p>
     <p>
       This section is a living document. It grows alongside the language itself, so expect gaps — if you hit
@@ -60,7 +53,7 @@
     </p>
 
     <h2 id="building">Building from source</h2>
-    <p>Novac requires CMake 3.20+ and a C++20 compiler (GCC 13+, Clang 16+, or MSVC 2022+).</p>
+    <p>Novac requires CMake 3.20+ and a C++20 compiler (GCC 13+, Clang 16+, or MinGW for windows).</p>
     <pre>git clone https://github.com/purcwix/novac.git
 cd novac
 cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -71,47 +64,21 @@ cmake --build build --config Release -j4</pre>
     <p>Running <code class="inline">novac</code> with no arguments drops you into the REPL, with raw-mode line
       editing and arrow-key history navigation built in.</p>
     <pre>$ novac
-&gt; let x = 21
-&gt; x * 2
+&gt; let x = 21;
+21
+&gt; x * 2;
 42</pre>
-    <p>Built-in REPL commands:</p>
-    <ul>
-      <li><code class="inline">.edit</code> — open the current buffer in your <code class="inline">$EDITOR</code></li>
-      <li><code class="inline">.time</code> — time the execution of the next expression</li>
-      <li><code class="inline">.history</code> — show REPL input history</li>
-      <li><code class="inline">.save &lt;file&gt;</code> — save the current session to a file</li>
-    </ul>
 
     <h2 id="syntax">Basic syntax</h2>
-    <pre>let name = "world"
-print("hello, " + name)
+    <pre>let name = "world";
+Std.println("hello, " + name);
 
-fn add(a, b) {
-    return a + b
+function add(a, b) {
+    return a + b;
 }
 
-let nums = [3, 1, 4, 1, 5, 9]
-print(nums.sort().reverse())</pre>
-
-    <h2 id="stdlib">Standard library</h2>
-    <p>A growing set of built-in modules, including:</p>
-    <ul>
-      <li><code class="inline">Std.StringScanner</code> / <code class="inline">Std.StringBuilder</code> — text processing</li>
-      <li><code class="inline">Std.Lexer</code> — build your own tokenizers on top of Novac's own</li>
-      <li><code class="inline">Std.LLM</code> — a llama.cpp wrapper with KV-cache diffing</li>
-      <li><code class="inline">Std.Getch</code> / <code class="inline">Std.Kbhit</code> / <code class="inline">Std.Putch</code> — cross-platform terminal I/O</li>
-    </ul>
-
-    <h2 id="ffi">FFI &amp; libffi</h2>
-    <p>Novac can call into C libraries directly, including native callbacks via <code class="inline">ffi_closure</code>,
-      variadic calls, and struct/union marshalling by value.</p>
-    <pre>let libm = Std.Ffi.load("libm.so.6")
-let sqrt = libm.bind("sqrt", "double", ["double"])
-print(sqrt(2))</pre>
-
-    <h2 id="com">Windows COM</h2>
-    <p>On Windows, Novac scripts can drive COM objects directly — including embedding WebView2 — without
-      hand-writing interface bindings.</p>
+let nums = [3, 1, 4, 1, 5, 9];
+Std.println(nums.sort().reverse());</pre>
 
     <h2 id="nvplus">nv+ package manager</h2>
     <p>
