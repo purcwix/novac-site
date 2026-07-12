@@ -29,9 +29,8 @@
   </div>
 
   <div class="pg-note">
-    Live in-browser execution isn't wired up yet — Novac's VM currently depends on native FFI and COM
-    interop that don't cross-compile to WebAssembly as-is. Until a WASM build exists, this page shows
-    real, runnable examples with their actual output. Run them yourself with <code class="inline">novac example.nv</code>.
+    These are real, runnable examples taken directly from the Novac examples directory.
+    Run them yourself with <code class="inline">novac &lt;file.nv&gt;</code> or paste them into the REPL.
   </div>
 
   <div class="pg-examples-nav" id="pg-tabs"></div>
@@ -51,33 +50,217 @@ const examples = [
     id: "hello",
     label: "Hello, world",
     title: "Hello, world",
-    desc: "The basics: variables, string concatenation, print.",
-    code: `let name = "world";
-Std.println("hello, " + name);`,
-    output: `hello, world`
+    desc: "Std.println and f-string interpolation.",
+    code: `let name = "World";
+let greeting = f"Hello, {name}!";
+Std.println(greeting);`,
+    output: `Hello, World!`
   },
   {
-    id: "sort",
+    id: "arrays",
     label: "Arrays",
-    title: "Sorting and chaining",
-    desc: "Method chaining on built-in array operations.",
-    code: `let nums = [3, 1, 4, 1, 5, 9];
-Std.println(nums.sort().reverse());`,
-    output: `[9, 5, 4, 3, 1, 1]`
+    title: "Array methods",
+    desc: "Sorting, filtering, mapping, reducing — all chainable.",
+    code: `let nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+let result = nums
+  .filter(n => n % 2 == 0)
+  .map(n => n ** 2)
+  .reduce((acc, n) => acc + n, 0);
+
+Std.println(result);`,
+    output: `220`
   },
   {
     id: "functions",
     label: "Functions",
-    title: "Functions & recursion",
-    desc: "Plain function declarations, recursive calls.",
-    code: `function fib(n) {
-    if n < 2 { return n }
-    return fib(n - 1) + fib(n - 2);
+    title: "Functions, closures & give",
+    desc: "Declarations, arrow functions, rest params, closures, and 'give' as an alias for return.",
+    code: `function sum(...nums) {
+  let total = 0;
+  each n of nums { total += n; }
+  return total;
+}
+Std.println(sum(1, 2, 3, 4, 5));
+
+// 'give' is an alias for return
+function triple(n) {
+  give n * 3;
+}
+Std.println(triple(4));
+
+// closures
+function makeCounter() {
+  let count = 0;
+  return () => { count++; return count; };
+}
+let counter = makeCounter();
+Std.println(counter());
+Std.println(counter());
+Std.println(counter());`,
+    output: `15
+12
+1
+2
+3`
+  },
+  {
+    id: "loops",
+    label: "Loops",
+    title: "All the loop forms",
+    desc: "for, for-of, each, while, until, repeat, and ranges.",
+    code: `// each with index
+let arr = [10, 20, 30];
+each v, idx of arr {
+  Std.println(f"arr[{idx}] = {v}");
 }
 
-Std.println(fib(10));`,
-    output: `55`
+// until (runs while condition is FALSE)
+let j = 0;
+until j >= 3 {
+  Std.println("until:", j);
+  j++;
+}
+
+// repeat N times
+repeat 3 { Std.println("repeat!"); }
+
+// range
+for let n of 0..3 { Std.println("range:", n); }`,
+    output: `arr[0] = 10
+arr[1] = 20
+arr[2] = 30
+until: 0
+until: 1
+until: 2
+repeat!
+repeat!
+repeat!
+range: 0
+range: 1
+range: 2
+range: 3`
   },
+  {
+    id: "match",
+    label: "Pattern matching",
+    title: "match / when",
+    desc: "Structural pattern matching with multiple values per arm and a default.",
+    code: `function classify(x) {
+  match x {
+    when 0         { return "zero"  }
+    when 1, 2, 3   { return "small" }
+    default        { return "other" }
+  }
+}
+Std.println(classify(0));
+Std.println(classify(2));
+Std.println(classify(99));
+
+// match on type
+function describe(val) {
+  match Std.typeOf(val) {
+    when "number" { return f"number: {val}"     }
+    when "string" { return f"string: \\"{val}\\"" }
+    default       { return f"other"             }
+  }
+}
+Std.println(describe(42));
+Std.println(describe("hello"));`,
+    output: `zero
+small
+other
+number: 42
+string: "hello"`
+  },
+  {
+    id: "classes",
+    label: "Classes",
+    title: "Classes & inheritance",
+    desc: "Class declarations, constructors, Super(), instanceof.",
+    code: `class Animal {
+  name: ""
+  sound: ""
+
+  constructor(name, sound) {
+    this.name = name;
+    this.sound = sound;
+  }
+
+  speak() {
+    Std.println(f"{this.name} says {this.sound}");
+  }
+}
+
+class Dog extends Animal {
+  breed: ""
+
+  constructor(name, breed) {
+    Super(name, "woof");
+    this.breed = breed;
+  }
+
+  fetch() {
+    Std.println(f"{this.name} the {this.breed} fetches the ball!");
+  }
+}
+
+let dog = Dog("Rex", "Labrador");
+dog.speak();
+dog.fetch();
+Std.println(dog instanceof Dog);
+Std.println(dog instanceof Animal);`,
+    output: `Rex says woof
+Rex the Labrador fetches the ball!
+true
+true`
+  },
+  {
+    id: "smartvars",
+    label: "Smart vars",
+    title: "Smart variable modifiers",
+    desc: "frozen, tracked, nonull, once, lazy, getter, setter.",
+    code: `// tracked: logs every change
+let score tracked = 0;
+score = 10;
+score = 20;
+
+// getter: transform on read
+let celsius = 100;
+let fahrenheit getter (v => v * 9/5 + 32) = celsius;
+Std.println(fahrenheit);
+
+// setter: transform on write
+let upper setter (v => v.toUpperCase()) = "alice";
+Std.println(upper);
+upper = "bob";
+Std.println(upper);`,
+    output: `score changed to 10
+score changed to 20
+212
+ALICE
+BOB`
+  },
+  {
+    id: "scope",
+    label: "Scope vars",
+    title: "localScope, parentScope, globalScope",
+    desc: "Every scope exposes introspection variables — like globalThis in JS, but for any scope level.",
+    code: `let x = 10;
+
+function demo() {
+  let y = 20;
+  Std.println(localScope.y);    // current scope
+  Std.println(parentScope.x);   // enclosing scope
+}
+demo();
+
+// globalScope holds everything at the top level
+Std.println(typeof globalScope.Std);`,
+    output: `20
+10
+object`
+  }
 ];
 
 const tabsEl = document.getElementById("pg-tabs");
@@ -91,7 +274,7 @@ exEl.innerHTML = examples.map((e, i) => `
   <div class="pg-example${i === 0 ? " active" : ""}" id="ex-${e.id}">
     <h3>${e.title}</h3>
     <p>${e.desc}</p>
-    <pre>${e.code}</pre>
+    <pre>${e.code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
     <div class="eyebrow" style="margin-top:18px;">Output</div>
     <pre>${e.output}</pre>
   </div>

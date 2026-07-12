@@ -32,8 +32,19 @@
     </div>
     <div class="docs-nav-group">
       <div class="docs-nav-group-title">Language</div>
-      <a href="#syntax">Basic syntax</a>
-      <a href="#stdlib">Standard library</a>
+      <a href="#variables">Variables</a>
+      <a href="#functions">Functions</a>
+      <a href="#control">Control flow</a>
+      <a href="#loops">Loops</a>
+      <a href="#classes">Classes</a>
+      <a href="#structs">Structs & enums</a>
+      <a href="#match">Pattern matching</a>
+      <a href="#async">Async & generators</a>
+      <a href="#scope">Scope variables</a>
+    </div>
+    <div class="docs-nav-group">
+      <div class="docs-nav-group-title">Standard library</div>
+      <a href="#stdlib">Std.* overview</a>
     </div>
     <div class="docs-nav-group">
       <div class="docs-nav-group-title">Tooling</div>
@@ -44,50 +55,281 @@
   <main class="docs-content prose">
     <h1 id="introduction">Introduction</h1>
     <p>
-      Novac is a scripting language built from scratch: its own lexer, parser, and executor,
-      written in C++. It's designed for scripts and toolings, it provides clean syntax, high level scripting features alongside low level power
+      Novac is a scripting language built from scratch — its own lexer, parser, and C++ executor,
+      with no third-party runtime underneath. It's designed to feel like a modern scripting language
+      while still being able to reach into native territory: loading shared libraries, calling C
+      functions directly, driving Win32 GUIs, and running worker threads.
     </p>
     <p>
-      This section is a living document. It grows alongside the language itself, so expect gaps — if you hit
-      one, the source and stdlib are the ground truth in the meantime.
+      This documentation is a living reference. The
+      <a href="https://github.com/purcwix/novac/tree/master/examples" target="_blank" rel="noopener">examples/</a>
+      directory in the repo is the most complete and authoritative source of runnable Novac code.
     </p>
 
     <h2 id="building">Building from source</h2>
-    <p>Novac requires CMake 3.20+ and a C++20 compiler (GCC 13+, Clang 16+, or MinGW for windows).</p>
+    <p>Requires CMake 3.20+ and a C++20 compiler (GCC 13+, Clang 16+, or MSVC 2022+).</p>
     <pre>git clone https://github.com/purcwix/novac.git
 cd novac
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release -j4</pre>
-    <p>This produces two binaries: <code class="inline">novac</code>, the interpreter/VM, and <code class="inline">nv+</code>, the package manager.</p>
+    <p>This produces two binaries: <code class="inline">novac</code> (the interpreter) and <code class="inline">nv+</code> (the package manager).</p>
 
     <h2 id="repl">Using the REPL</h2>
-    <p>Running <code class="inline">novac</code> with no arguments drops you into the REPL, with raw-mode line
-      editing and arrow-key history navigation built in.</p>
+    <p>Running <code class="inline">novac</code> with no arguments starts the REPL with raw-mode line editing and arrow-key history.</p>
     <pre>$ novac
+Type .exit to exit, .help for commands
+
 &gt; let x = 21;
-21
 &gt; x * 2;
 42</pre>
+    <p>Built-in REPL commands:</p>
+    <ul>
+      <li><code class="inline">.edit</code> — enter multi-line edit mode; <code class="inline">.editend</code> to run, <code class="inline">.editcancel</code> to abort</li>
+      <li><code class="inline">.time</code> — time the next expression</li>
+      <li><code class="inline">.history</code> — print input history</li>
+      <li><code class="inline">.save</code> — save session to a file</li>
+      <li><code class="inline">.help</code> — list all commands</li>
+    </ul>
 
-    <h2 id="syntax">Basic syntax</h2>
-    <pre>let name = "world";
-Std.println("hello, " + name);
+    <h2 id="variables">Variables</h2>
+    <p><code class="inline">let</code>, <code class="inline">const</code>, and <code class="inline">var</code> all declare variables. Destructuring works on both objects and arrays.</p>
+    <pre>let x = 10;
+const PI = 3.14159;
+var mutable = 42;
+mutable = 100;
 
-function add(a, b) {
-    return a + b;
+// destructuring
+let { a, b } = { a: 1, b: 2 };
+let [first, second] = [10, 20];
+let [head, ...tail] = [1, 2, 3, 4];</pre>
+
+    <p>Novac also has <strong>smart variable modifiers</strong>:</p>
+    <pre>let x frozen = 42;                          // cannot be reassigned
+let score tracked = 0;                      // prints on every change
+let name nonull = "Alice";                  // throws if set to null
+let id once = 1001;                         // can only be assigned once
+let heavy lazy = (() => expensiveOp())();   // computed on first access
+let celsius = 100;
+let f getter (v => v * 9/5 + 32) = celsius; // transform on read
+let upper setter (v => v.toUpperCase()) = "alice"; // transform on write</pre>
+
+    <h2 id="functions">Functions</h2>
+    <pre>// declaration
+function greet(name) {
+  return f"Hello, {name}!";
 }
 
-let nums = [3, 1, 4, 1, 5, 9];
-Std.println(nums.sort().reverse());</pre>
+// default params
+function power(base, exp = 2) {
+  return base ** exp;
+}
+
+// rest params
+function sum(...nums) {
+  let total = 0;
+  each n of nums { total += n; }
+  return total;
+}
+
+// arrow functions
+let double = x => x * 2;
+let add = (a, b) => a + b;
+
+// 'give' is an alias for return
+function triple(n) {
+  give n * 3;
+}
+
+// closures
+function makeCounter() {
+  let count = 0;
+  return () => { count++; return count; };
+}
+let counter = makeCounter();
+Std.println(counter()); // 1
+Std.println(counter()); // 2</pre>
+
+    <h2 id="control">Control flow</h2>
+    <pre>// if / else if / else
+if x > 20 {
+  Std.println("big");
+} else if x > 10 {
+  Std.println("medium");
+} else {
+  Std.println("small");
+}
+
+// unless (runs when condition is FALSE)
+unless x == 0 { Std.println("x is not zero"); }
+
+// ternary
+let label = x > 10 ? "over ten" : "ten or less";
+
+// postfix if
+Std.println("positive") if x > 0;
+
+// switch
+switch day {
+  case "Mon": Std.println("Monday"); break
+  case "Fri": Std.println("Friday"); break
+  default:    Std.println("Other day")
+}</pre>
+
+    <h2 id="loops">Loops</h2>
+    <pre>// C-style for
+for let i = 0; i < 5; i++ { Std.println(i); }
+
+// for-of
+for let v of [10, 20, 30] { Std.println(v); }
+
+// for-in (object keys)
+for let k in { a: 1, b: 2 } { Std.println(k); }
+
+// each — Nova-style for-of with optional index
+each v, idx of arr { Std.println(f"arr[{idx}] = {v}"); }
+
+// while / until / do-while
+while i < 5 { i++; }
+until i >= 5 { i++; }    // runs while condition is FALSE
+do { i++; } while i < 5;
+
+// repeat N times
+repeat 4 { Std.println("repeat!"); }
+
+// ranges (inclusive)
+for let n of 0..5 { Std.println(n); }</pre>
+
+    <h2 id="classes">Classes</h2>
+    <pre>class Animal {
+  name: ""
+  sound: ""
+
+  constructor(name, sound) {
+    this.name = name;
+    this.sound = sound;
+  }
+
+  speak() {
+    Std.println(f"{this.name} says {this.sound}");
+  }
+}
+
+class Dog extends Animal {
+  breed: ""
+
+  constructor(name, breed) {
+    Super(name, "woof");
+    this.breed = breed;
+  }
+}
+
+let dog = Dog("Rex", "Labrador");
+dog.speak();
+Std.println(dog instanceof Dog);    // true
+Std.println(dog instanceof Animal); // true</pre>
+
+    <h2 id="structs">Structs & enums</h2>
+    <pre>struct Point {
+  x: number = 0,
+  y: number = 0
+}
+let p = Point({ x: 3, y: 4 });
+Std.println(p.x, p.y);
+
+enum Direction { North, South, East, West }
+let dir = Direction.North;
+Std.println(dir.variant);   // "North"
+Std.println(dir.enumType);  // "Direction"</pre>
+
+    <h2 id="match">Pattern matching</h2>
+    <pre>function classify(x) {
+  match x {
+    when 0         { return "zero"  }
+    when 1, 2, 3   { return "small" }
+    default        { return "other" }
+  }
+}
+
+// match on type
+function describe(val) {
+  match Std.typeOf(val) {
+    when "number" { return f"number: {val}"   }
+    when "string" { return f"string: \"{val}\"" }
+    default       { return f"other"           }
+  }
+}</pre>
+
+    <h2 id="async">Async & generators</h2>
+    <pre>// async / await
+function async fetchData() {
+  await Std.sleep(10);
+  return { status: 200, data: "hello" };
+}
+let result = await fetchData();
+Std.println(result.status);
+
+// generators
+function generator count(start, end) {
+  for let i = start; i <= end; i++ {
+    yield i;
+  }
+}
+let gen = count(1, 5);
+Std.println(gen.next()); // 1
+Std.println(gen.next()); // 2</pre>
+
+    <h2 id="scope">Scope variables</h2>
+    <p>Every scope in Novac exposes three read-only introspection variables, similar to <code class="inline">globalThis</code> in JavaScript:</p>
+    <ul>
+      <li><code class="inline">localScope</code> — an object snapshot of all variables in the current scope</li>
+      <li><code class="inline">parentScope</code> — an object snapshot of the immediately enclosing scope's variables</li>
+      <li><code class="inline">globalScope</code> — an object snapshot of the top-level global scope (all built-ins and top-level declarations)</li>
+    </ul>
+    <pre>let x = 10;
+function demo() {
+  let y = 20;
+  Std.println(localScope.y);        // 20
+  Std.println(parentScope.x);       // 10
+  Std.println(globalScope.Std);     // [object]
+}
+demo();</pre>
+    <p>All three are read-only — assigning to them throws a runtime error.</p>
+
+    <h2 id="stdlib">Std.* overview</h2>
+    <p>Novac's standard library lives under the <code class="inline">Std</code> namespace. A selection of available modules:</p>
+    <ul>
+      <li><code class="inline">Std.println</code> / <code class="inline">Std.print</code> / <code class="inline">Std.input</code> — basic I/O</li>
+      <li><code class="inline">Std.typeOf</code> / <code class="inline">Std.typeof</code> — type introspection</li>
+      <li><code class="inline">Std.Math</code> — math utilities (<code class="inline">.sqrt</code>, <code class="inline">.abs</code>, <code class="inline">.floor</code>, <code class="inline">.random</code>, <code class="inline">.PI</code>, …)</li>
+      <li><code class="inline">Std.String</code> — string utilities (<code class="inline">.fromCharCode</code>, …)</li>
+      <li><code class="inline">Std.Object</code> — <code class="inline">.keys</code>, <code class="inline">.values</code>, <code class="inline">.entries</code></li>
+      <li><code class="inline">Std.FS</code> — filesystem: <code class="inline">.Exists</code>, <code class="inline">.IsFile</code>, <code class="inline">.IsDirectory</code></li>
+      <li><code class="inline">Std.Random</code> — <code class="inline">.shuffle</code> and more</li>
+      <li><code class="inline">Std.Regex</code> — regular expressions</li>
+      <li><code class="inline">Std.StringScanner</code> / <code class="inline">Std.StringBuilder</code> — text processing</li>
+      <li><code class="inline">Std.Lexer</code> — build tokenizers on top of Novac's own lexer</li>
+      <li><code class="inline">Std.Fiber</code> — cooperative fibers / coroutines</li>
+      <li><code class="inline">Std.WorkerThread</code> — run Novac source strings in parallel worker threads</li>
+      <li><code class="inline">Std.Getch</code> / <code class="inline">Std.Kbhit</code> / <code class="inline">Std.Putch</code> — cross-platform raw terminal I/O</li>
+      <li><code class="inline">Std.Timers</code> — timers and scheduling</li>
+      <li><code class="inline">Std.Processes</code> — process management</li>
+      <li><code class="inline">Std.Dlopen</code> / <code class="inline">Std.Ccall</code> — native library loading and calling</li>
+      <li><code class="inline">Std.Windows.GUI</code> — Win32 window and control creation (Windows only)</li>
+      <li><code class="inline">Std.Satisfies</code> — runtime interface conformance check</li>
+      <li><code class="inline">Std.SetOverload</code> / <code class="inline">Std.SetOverloadRaw</code> — operator overloading</li>
+      <li><code class="inline">Std.eval</code> / <code class="inline">Std.include</code> — dynamic code evaluation and file inclusion</li>
+    </ul>
 
     <h2 id="nvplus">nv+ package manager</h2>
     <p>
-      <code class="inline">nv+</code> installs and publishes Novac packages through a GitHub PR–based registry
-      workflow (<a href="https://github.com/purcwix/nova-registry" target="_blank" rel="noopener">nova-registry</a>) —
-      no central package server required.
+      <code class="inline">nv+</code> installs and publishes packages through a GitHub PR–based registry — no central server.
     </p>
     <pre>nv+ install nvo-semver
-nv+ install nvo-cron</pre>
+nv+ install nvo-cron
+nv+ publish        // creates repo + opens PR to nova-registry
+nv+ list
+nv+ search &lt;name&gt;</pre>
+    <p>Packages export symbols using <code class="inline">export { name: value }</code> and are imported with <code class="inline">from "path" import Name</code> or <code class="inline">Std.include(name)</code>.</p>
   </main>
 </div>
 
